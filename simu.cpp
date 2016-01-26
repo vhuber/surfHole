@@ -86,6 +86,8 @@ int main(int argc, char**argv )
   // Static part
 
   do{
+    if( Environment::worldComm().isMasterRank() )
+      std::cout << "Time : " << M_bdf->time()  << std::endl;
     auto M_bdf_poly = M_bdf->polyDeriv();
     l = ls;
     l += integrate(_range=elements(mesh),_expr = inner(idv(M_bdf_poly.element<0>()),id(v)));
@@ -99,7 +101,7 @@ int main(int argc, char**argv )
         );
 
     a+=on(_range=markedfaces(mesh,"null"), _rhs=l, _element=u,_expr=vec(cst(0.),cst(0.)));
-    a+=on(_range=markedfaces(mesh,"g"), _rhs=l, _element=u,_expr=vec(cst(0.),cst(-1)));
+    //a+=on(_range=markedfaces(mesh,"g"), _rhs=l, _element=u,_expr=vec(cst(0.),cst(-1)));
     a+=on(_range=markedpoints(mesh,"p"), _rhs=l, _element=p, _expr=cst(0.)); // To avoid indefinite pressure
 
     a.solve(_rhs=l,_solution=U); // Compute with default backend
@@ -113,7 +115,7 @@ int main(int argc, char**argv )
       LOG(INFO) << "Moving Phi\n";
       ap = integrate(_range=elements(mesh),
           _expr = M_bdf_phi->polyDerivCoefficient(0)*id(phi)*idt(phi)
-          + inner(idv(u), trans(grad(phi)))*idt(phi));
+          + inner(idv(u), trans(gradt(phi)))*id(phi));
       LOG(INFO) << "LHS Done\n";
 
       lp = integrate(_range=elements(mesh),
